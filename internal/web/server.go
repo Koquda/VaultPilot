@@ -263,7 +263,7 @@ func (s *Server) model(r *http.Request) page {
 			maxService = v.Gross
 		}
 	}
-	colors := []string{"#366d5c", "#86aa9b", "#b9ce9f", "#c9b07c", "#889db0", "#c6b6a9"}
+	colors := []string{"#3485e4", "#299194", "#9980d4", "#c28625", "#7791ad", "#9a7482"}
 	for i, v := range a.Services {
 		p.Services = append(p.Services, serviceView{v.Name, billing.ProviderName(v.Provider), billing.Format(v.Net, a.Currency), billing.Format(v.Gross, a.Currency), fmt.Sprintf("%.2f", float64(v.Gross)/float64(maxService)*100), colors[i%len(colors)]})
 	}

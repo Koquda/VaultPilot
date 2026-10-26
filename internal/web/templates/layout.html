@@ -11,33 +11,32 @@
 <a class="skip" href="#content">Skip to content</a>
 <div class="app-shell">
 <aside class="sidebar">
-<a class="brand" href="/">{{icon "vault"}}<span>VaultPilot<span class="brand-dot">.</span>
+<a class="brand" href="/" aria-label="VaultPilot overview">{{icon "vault"}}<span>VaultPilot<span class="brand-dot">.</span>
 </span>
 </a>
 <div class="workspace">
 <span class="workspace-mark">N</span>
 <div>
 <strong>Northstar</strong>
-<small>Startup workspace</small>
+<small>Local workspace</small>
 </div>
-<span class="workspace-chevron">⌄</span>
 </div>
 <p class="nav-label">WORKSPACE</p>
 <nav aria-label="Main navigation">
-<a href="/" class="{{if eq .Active "overview"}}active{{end}}">{{icon "grid"}}Overview</a>
-<a href="/transactions?month={{.Month}}&amp;provider={{.Provider}}&amp;search={{.Search}}" class="{{if eq .Active "transactions"}}active{{end}}">{{icon "rows"}}Transactions</a>
-<a href="/imports" class="{{if eq .Active "imports"}}active{{end}}">{{icon "import"}}Imports</a>
-<a href="/settings?month={{.Month}}&amp;provider={{.Provider}}&amp;search={{.Search}}" class="{{if eq .Active "settings"}}active{{end}}">{{icon "settings"}}Settings</a>
+<a href="/" aria-label="Overview" aria-current="{{if eq .Active "overview"}}page{{else}}false{{end}}" title="Overview" class="{{if eq .Active "overview"}}active{{end}}">{{icon "grid"}}<span class="nav-text">Overview</span></a>
+<a href="/transactions?month={{.Month}}&amp;provider={{.Provider}}&amp;search={{.Search}}" aria-label="Transactions" aria-current="{{if eq .Active "transactions"}}page{{else}}false{{end}}" title="Transactions" class="{{if eq .Active "transactions"}}active{{end}}">{{icon "rows"}}<span class="nav-text">Transactions</span></a>
+<a href="/imports" aria-label="Imports" aria-current="{{if eq .Active "imports"}}page{{else}}false{{end}}" title="Imports" class="{{if eq .Active "imports"}}active{{end}}">{{icon "import"}}<span class="nav-text">Imports</span></a>
+<a href="/settings?month={{.Month}}&amp;provider={{.Provider}}&amp;search={{.Search}}" aria-label="Settings" aria-current="{{if eq .Active "settings"}}page{{else}}false{{end}}" title="Settings" class="{{if eq .Active "settings"}}active{{end}}">{{icon "settings"}}<span class="nav-text">Settings</span></a>
 </nav>
 <div class="sidebar-bottom">
-<div class="local-card">{{icon "shield"}}<strong>Your data stays here.</strong>
-<p>Local storage. No cloud keys.<br>No third-party services.</p>
+<div class="local-card">{{icon "shield"}}<strong>Private by design</strong>
+<p>Billing data stays on this device.<br>No cloud keys required.</p>
 </div>
 <div class="profile">
-<span>NS</span>
+<span>VP</span>
 <div>
-<strong>Northstar team</strong>
-<small>Local workspace</small>
+<strong>Local workspace</strong>
+<small>Stored on this device</small>
 </div>
 <span class="status-dot">
 </span>
@@ -53,15 +52,14 @@
 </div>
 <div class="topbar-right">
 <span class="privacy">{{icon "shield"}} Local & private</span>
-<span class="avatar">N</span>
 </div>
 </header>
 <main id="content">
 <div class="page-heading">
 <div>
-<div class="eyebrow">YOUR INFRASTRUCTURE, IN FOCUS</div>
-<h1>{{if eq .Active "overview"}}A clear view of your<br>cloud spend.{{else if eq .Active "transactions"}}Every charge, accounted for.{{else if eq .Active "imports"}}Bring your billing into focus.{{else}}Make room for what’s next.{{end}}</h1>
-<p class="subtitle">{{if eq .Active "overview"}}Know where your budget stands. See what’s coming next.{{else if eq .Active "transactions"}}Explore the charges and credits behind your cloud costs.{{else if eq .Active "imports"}}One validated billing snapshot. A clearer financial picture.{{else}}Set your limits and keep control of your local workspace.{{end}}</p>
+<div class="eyebrow">{{if eq .Active "overview"}}FINANCIAL OVERVIEW{{else}}YOUR WORKSPACE{{end}}</div>
+<h1>{{if eq .Active "overview"}}Cloud spending{{else if eq .Active "transactions"}}Transactions{{else if eq .Active "imports"}}Billing imports{{else}}Settings{{end}}</h1>
+<p class="subtitle">{{if eq .Active "overview"}}Your costs, budget, and what’s ahead.{{else if eq .Active "transactions"}}Every charge and credit, in one place.{{else if eq .Active "imports"}}Preview your billing data before updating the workspace.{{else}}Manage your budget and local data.{{end}}</p>
 </div>{{if ne .Active "imports"}}<a class="button primary" href="/imports">{{icon "import"}} Import billing CSV</a>{{end}}</div>
 {{if .Error}}<div class="notice error" role="alert">
 <strong>We couldn’t apply that change.</strong>
@@ -122,7 +120,7 @@
 <div class="panel-heading">
 <div>
 <h2>Daily cloud spend</h2>
-<p>Actual charges and the road ahead.</p>
+<p>Daily costs with a month-end projection.</p>
 </div>
 <span class="soft-tag">{{monthLabel .Month}}</span>
 </div>
@@ -176,7 +174,7 @@
 </div>
 </details>
 </section>
-<aside class="panel budget-panel">
+<aside class="panel budget-panel {{if or .OverBudget .AtRisk}}at-risk{{end}}">
 <div class="panel-heading">
 <div>
 <h2>Budget health</h2>
@@ -213,7 +211,7 @@
 <section class="panel">
 <div class="panel-heading">
 <div>
-<h2>Where it’s going</h2>
+<h2>Spend by service</h2>
 <p>Net spend by service.</p>
 </div>
 <a class="text-link" href="/transactions?month={{.Month}}&amp;provider={{.Provider}}&amp;search={{.Search}}">View charges {{icon "arrow"}}</a>
@@ -238,7 +236,7 @@
 <section class="panel">
 <div class="panel-heading">
 <div>
-<h2>Worth a closer look</h2>
+<h2>Spending alerts</h2>
 <p>Spending changes that deserve attention.</p>
 </div>
 <span class="count-badge">{{.A.OpenSpikes}}</span>
@@ -275,7 +273,7 @@
 <div class="panel-heading">
 <div>
 <h2>Billing activity</h2>
-<p>{{len .Rows}} matching rows. Identical charges remain separate.</p>
+<p>{{len .Rows}} matching row{{if ne (len .Rows) 1}}s{{end}}. Identical charges remain separate.</p>
 </div>
 <a class="button secondary" href="/export.csv?month={{.Month}}&amp;provider={{.Provider}}&amp;search={{.Search}}">{{icon "import"}} Export CSV</a>
 </div>
@@ -311,7 +309,7 @@
 <div>
 <span class="eyebrow">REVIEW BEFORE REPLACEMENT</span>
 <h2>Your billing snapshot is ready.</h2>
-<p>{{.Preview.Snapshot.Name}} · {{len .Preview.Snapshot.Rows}} validated rows</p>
+<p>{{.Preview.Snapshot.Name}} · {{len .Preview.Snapshot.Rows}} validated row{{if ne (len .Preview.Snapshot.Rows) 1}}s{{end}}</p>
 </div>
 <span class="pill">{{.Preview.Snapshot.Currency}}</span>
 </div>
@@ -352,7 +350,7 @@
 </tr>{{end}}{{end}}</tbody>
 </table>
 </div>
-<p class="fine-print">Showing the first eight rows. All rows passed validation. This preview expires in 15 minutes.</p>
+<p class="fine-print">Showing up to eight rows. All rows passed validation. This preview expires in 15 minutes.</p>
 <form method="post" action="/imports/apply" class="form-actions">
 <input type="hidden" name="csrf" value="{{.CSRF}}">
 <input type="hidden" name="token" value="{{.Token}}">
@@ -430,7 +428,7 @@
 <section class="panel">
 <div class="panel-heading">
 <div>
-<h2>A budget for your next move</h2>
+<h2>Monthly budget</h2>
 <p>{{monthLabel .Month}} · {{provider .Provider}} · {{.Currency}}</p>
 </div>{{icon "wallet"}}</div>
 <form action="/budget" method="post" class="settings-form">
@@ -447,7 +445,7 @@
 </section>
 <section class="panel">
 <div class="panel-heading">
-<h2>Your workspace, your machine.</h2>{{icon "shield"}}</div>
+<h2>Local data</h2>{{icon "shield"}}</div>
 <p>Billing snapshots, budgets, and review status are saved in the local data directory. VaultPilot does not contact cloud providers or third-party services.</p>
 <dl class="info-list">
 <div>
