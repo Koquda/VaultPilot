@@ -1,0 +1,2 @@
+date,provider,service,cost,currency
+2026-10-01,aws,<script>alert(1)</script>,10,USD

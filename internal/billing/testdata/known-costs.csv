@@ -1,0 +1,11 @@
+date,provider,service,cost,currency
+2026-10-01,aws,Compute,100.000000,USD
+2026-10-02,aws,Compute,100,USD
+2026-10-03,aws,Compute,100,USD
+2026-10-04,aws,Compute,100,USD
+2026-10-05,aws,Compute,100,USD
+2026-10-06,aws,Compute,100,USD
+2026-10-07,aws,Compute,100,USD
+2026-10-08,aws,Compute,250,USD
+2026-10-08,aws,Credit,-25,USD
+2026-10-08,gcp,"Database, managed",40,USD
