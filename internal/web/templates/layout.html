@@ -1,0 +1,502 @@
+{{define "layout"}}<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="VaultPilot, a local cloud-cost workspace for budgets, billing exports, and spending spikes.">
+<title>{{.Title}} · VaultPilot</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="app-shell">
+<aside class="sidebar">
+<a class="brand" href="/">{{icon "vault"}}<span>VaultPilot<span class="brand-dot">.</span>
+</span>
+</a>
+<div class="workspace">
+<span class="workspace-mark">N</span>
+<div>
+<strong>Northstar</strong>
+<small>Startup workspace</small>
+</div>
+<span class="workspace-chevron">⌄</span>
+</div>
+<p class="nav-label">WORKSPACE</p>
+<nav aria-label="Main navigation">
+<a href="/" class="{{if eq .Active "overview"}}active{{end}}">{{icon "grid"}}Overview</a>
+<a href="/transactions?month={{.Month}}&amp;provider={{.Provider}}&amp;search={{.Search}}" class="{{if eq .Active "transactions"}}active{{end}}">{{icon "rows"}}Transactions</a>
+<a href="/imports" class="{{if eq .Active "imports"}}active{{end}}">{{icon "import"}}Imports</a>
+<a href="/settings?month={{.Month}}&amp;provider={{.Provider}}&amp;search={{.Search}}" class="{{if eq .Active "settings"}}active{{end}}">{{icon "settings"}}Settings</a>
+</nav>
+<div class="sidebar-bottom">
+<div class="local-card">{{icon "shield"}}<strong>Your data stays here.</strong>
+<p>Local storage. No cloud keys.<br>No third-party services.</p>
+</div>
+<div class="profile">
+<span>NS</span>
+<div>
+<strong>Northstar team</strong>
+<small>Local workspace</small>
+</div>
+<span class="status-dot">
+</span>
+</div>
+</div>
+</aside>
+<div class="main-wrap">
+<header class="topbar">
+<div>
+<span class="muted">Workspace</span>
+<span class="slash">/</span>
+<strong>{{.Title}}</strong>
+</div>
+<div class="topbar-right">
+<span class="privacy">{{icon "shield"}} Local & private</span>
+<span class="avatar">N</span>
+</div>
+</header>
+<main id="content">
+<div class="page-heading">
+<div>
+<div class="eyebrow">YOUR INFRASTRUCTURE, IN FOCUS</div>
+<h1>{{if eq .Active "overview"}}A clear view of your<br>cloud spend.{{else if eq .Active "transactions"}}Every charge, accounted for.{{else if eq .Active "imports"}}Bring your billing into focus.{{else}}Make room for what’s next.{{end}}</h1>
+<p class="subtitle">{{if eq .Active "overview"}}Know where your budget stands. See what’s coming next.{{else if eq .Active "transactions"}}Explore the charges and credits behind your cloud costs.{{else if eq .Active "imports"}}One validated billing snapshot. A clearer financial picture.{{else}}Set your limits and keep control of your local workspace.{{end}}</p>
+</div>{{if ne .Active "imports"}}<a class="button primary" href="/imports">{{icon "import"}} Import billing CSV</a>{{end}}</div>
+{{if .Error}}<div class="notice error" role="alert">
+<strong>We couldn’t apply that change.</strong>
+<p>{{.Error}}</p>
+</div>{{end}}{{if .Notice}}<div class="notice success" role="status">{{.Notice}}</div>{{end}}
+<div class="dataset-strip">
+<div>
+<span class="pill {{if .Demo}}demo{{end}}">{{if .Demo}}DEMO DATA{{else}}IMPORTED DATA{{end}}</span>
+<span>{{.Source}}</span>
+</div>
+<span>Covered through {{.CoverageThrough}} <span class="separator">·</span> {{.Currency}}</span>
+</div>
+{{if or (eq .Active "overview") (eq .Active "transactions") (eq .Active "settings")}}<form class="filters" method="get" action="{{if eq .Active "transactions"}}/transactions{{else if eq .Active "settings"}}/settings{{else}}/{{end}}">
+<div class="filter-item">
+<label for="month">Billing month</label>
+<select name="month" id="month">{{range .Months}}<option value="{{.Value}}" {{if .Selected}}selected{{end}}>{{.Label}}</option>{{end}}</select>
+</div>
+<div class="filter-item">
+<label for="provider">Cloud provider</label>
+<select name="provider" id="provider">{{range .Providers}}<option value="{{.Value}}" {{if .Selected}}selected{{end}}>{{.Label}}</option>{{end}}</select>
+</div>{{if eq .Active "transactions"}}<div class="filter-item search">
+<label for="search">Search charges</label>
+<input id="search" name="search" value="{{.Search}}" maxlength="200" placeholder="Service, provider, or date">
+</div>{{end}}<button class="button secondary" type="submit">Apply filters</button>
+<span class="filter-context">{{if .Confirmed}}Complete coverage confirmed{{else}}Coverage is unconfirmed{{end}}</span>
+</form>{{end}}
+{{if eq .Active "overview"}}
+<section class="metrics" aria-label="Spending summary">
+<article class="metric">
+<div class="metric-label">Spend to date<span>{{icon "wallet"}}</span>
+</div>
+<div class="metric-value">{{.Spend}}</div>
+<p>Net charges <span class="metric-detail">{{.Currency}}</span>
+</p>
+</article>
+<article class="metric">
+<div class="metric-label">Month-end forecast<span>{{icon "trend"}}</span>
+</div>
+<div class="metric-value {{if not .HasForecast}}unavailable{{end}}">{{.Forecast}}</div>
+<p>{{if .HasForecast}}As of {{date .A.Forecast.Through}}{{else}}More coverage needed{{end}}</p>
+</article>
+<article class="metric">
+<div class="metric-label">Budget remaining<span>{{icon "wallet"}}</span>
+</div>
+<div class="metric-value">{{.Remaining}}</div>
+<p>{{if .BudgetSet}}Of {{.Budget}} monthly limit{{else}}Set a budget to track headroom{{end}}</p>
+</article>
+<article class="metric">
+<div class="metric-label">Spending spikes<span>{{icon "alert"}}</span>
+</div>
+<div class="metric-value">{{.A.OpenSpikes}}<span class="metric-unit">to review</span>
+</div>
+<p>{{len .Spikes}} detected in this billing month</p>
+</article>
+</section>
+<div class="overview-grid">
+<section class="panel spend-panel">
+<div class="panel-heading">
+<div>
+<h2>Daily cloud spend</h2>
+<p>Actual charges and the road ahead.</p>
+</div>
+<span class="soft-tag">{{monthLabel .Month}}</span>
+</div>
+<div class="chart-legend">
+<span>
+<i class="legend-dot actual">
+</i>Actual net spend</span>
+<span>
+<i class="legend-line">
+</i>Projected gross spend</span>
+</div>
+<div class="chart-wrap">
+<svg class="spend-chart" viewBox="0 0 720 270" role="img" aria-labelledby="chart-title chart-desc">
+<title id="chart-title">Daily cloud spending for {{monthLabel .Month}}</title>
+<desc id="chart-desc">Actual net cost is {{.Spend}}. {{if .HasForecast}}The month-end estimate is {{.Forecast}}, as of {{date .A.Forecast.Through}}.{{else}}{{.A.Forecast.Reason}}{{end}} A daily table follows.</desc>{{range $i,$tick:=.Chart.Ticks}}<line x1="48" x2="690" y1="{{if eq $i 0}}28{{else if eq $i 1}}91.3{{else if eq $i 2}}154.7{{else}}218{{end}}" y2="{{if eq $i 0}}28{{else if eq $i 1}}91.3{{else if eq $i 2}}154.7{{else}}218{{end}}" class="grid-line"/>
+<text x="2" y="{{if eq $i 0}}23{{else if eq $i 1}}86{{else if eq $i 2}}150{{else}}213{{end}}" class="axis-label">{{$tick}}</text>{{end}}{{if .Chart.HasActual}}<polygon points="{{.Chart.Area}}" fill="#e3eee7"/>
+<polyline points="{{.Chart.Actual}}" class="actual-line"/>{{end}}{{if .Chart.HasForecast}}<polyline points="{{.Chart.Forecast}}" class="forecast-line"/>{{end}}<text x="48" y="250" class="axis-label">01</text>
+<text x="180" y="250" class="axis-label">07</text>
+<text x="335" y="250" class="axis-label">14</text>
+<text x="490" y="250" class="axis-label">21</text>
+<text x="680" y="250" class="axis-label">{{index .Chart.Labels 4}}</text>
+</svg>
+</div>
+<div class="chart-caption">
+<span>{{icon "cloud"}} {{provider .Provider}} <span class="separator">·</span> {{.Currency}}</span>
+<span>{{if .HasForecast}}Projection as of {{date .A.Forecast.Through}}{{else}}Observed charges only{{end}}</span>
+</div>
+<details class="method">
+<summary>How the forecast works</summary>{{if .HasForecast}}{{if .A.Forecast.FullMonth}}<p>This month is fully covered. The displayed figure is the actual net total.</p>{{else}}<p>The estimate adds remaining calendar days at the last seven complete days’ average positive charges to actual net cost. Current-day charges are excluded. Existing credits count once. Future credits are not assumed.</p>
+<p>Daily run rate {{.RunRate}}. {{.A.Forecast.RemainingDays}} days projected. Scenario range {{money .A.Forecast.Low .Currency}} to {{money .A.Forecast.High .Currency}} uses recent daily values. It is not a confidence interval.</p>{{end}}{{else}}<p>{{.A.Forecast.Reason}} Complete coverage must start at the beginning of the month. At least seven completed days are required.</p>{{end}}<p>These are estimates as of the stated date, including for historical snapshots. They do not imply a live cloud connection.</p>
+</details>
+<details class="method">
+<summary>View daily values</summary>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>Date</th>
+<th>Actual net</th>
+<th>Projected gross</th>
+<th>Coverage</th>
+</tr>
+</thead>
+<tbody>{{range .A.Days}}<tr>
+<td>{{.Date}}</td>
+<td>{{if .Complete}}{{money .Net $.Currency}}{{else}}Not complete{{end}}</td>
+<td>{{if and $.HasForecast (gt .Date $.A.Forecast.Through)}}{{money .Projected $.Currency}}{{else}}—{{end}}</td>
+<td>{{if .Complete}}Complete{{else}}Unconfirmed or outside coverage{{end}}</td>
+</tr>{{end}}</tbody>
+</table>
+</div>
+</details>
+</section>
+<aside class="panel budget-panel">
+<div class="panel-heading">
+<div>
+<h2>Budget health</h2>
+<p>{{provider .Provider}}</p>
+</div>{{icon "wallet"}}</div>
+<div class="budget-ring">
+<svg viewBox="0 0 160 160" aria-hidden="true">
+<circle cx="80" cy="80" r="65" fill="none" stroke="#e9ece6" stroke-width="12"/>
+<circle cx="80" cy="80" r="65" pathLength="100" fill="none" stroke="{{if or .OverBudget .AtRisk}}#a65b3d{{else}}#477c64{{end}}" stroke-width="12" stroke-dasharray="{{.Ring}} 100" transform="rotate(-90 80 80)" stroke-linecap="round"/>
+</svg>
+<div>
+<strong>{{if .BudgetSet}}{{.Percent}}{{if ne .Percent "Over"}}%{{end}}{{else}}—{{end}}</strong>
+<span>of budget used</span>
+</div>
+</div>
+<div class="budget-state">{{if .BudgetSet}}{{if .OverBudget}}Above your monthly limit{{else if .AtRisk}}Forecast above your budget{{else}}Room to keep building{{end}}{{else}}Give your spending a limit{{end}}</div>
+<dl class="budget-values">
+<div>
+<dt>Monthly budget</dt>
+<dd>{{.Budget}}</dd>
+</div>
+<div>
+<dt>Spent so far</dt>
+<dd>{{.Spend}}</dd>
+</div>{{if and .BudgetSet .HasForecast}}<div>
+<dt>Forecast headroom</dt>
+<dd>{{.ForecastGap}}</dd>
+</div>{{end}}</dl>
+<a class="button secondary wide" href="/settings?month={{.Month}}&amp;provider={{.Provider}}&amp;search={{.Search}}">Edit budget {{icon "arrow"}}</a>
+<p class="fine-print">Budget applies to this month, currency, and provider selection.</p>
+</aside>
+</div>
+<div class="lower-grid">
+<section class="panel">
+<div class="panel-heading">
+<div>
+<h2>Where it’s going</h2>
+<p>Net spend by service.</p>
+</div>
+<a class="text-link" href="/transactions?month={{.Month}}&amp;provider={{.Provider}}&amp;search={{.Search}}">View charges {{icon "arrow"}}</a>
+</div>
+<div class="service-list">{{range .Services}}<div class="service-row">
+<div class="service-meta">
+<span class="service-color" style="background:{{.Color}}">
+</span>
+<div>
+<strong>{{.Name}}</strong>
+<small>{{.Provider}}</small>
+</div>
+<strong class="service-total">{{.Total}}</strong>
+</div>
+<div class="service-track">
+<span style="width:{{.Width}}%;background:{{.Color}}">
+</span>
+</div>
+</div>{{else}}<p class="empty">No charges match this selection.</p>{{end}}</div>
+<p class="fine-print">Bar length shows positive charges. Totals include credits.</p>
+</section>
+<section class="panel">
+<div class="panel-heading">
+<div>
+<h2>Worth a closer look</h2>
+<p>Spending changes that deserve attention.</p>
+</div>
+<span class="count-badge">{{.A.OpenSpikes}}</span>
+</div>
+<div class="spike-list">{{range .Spikes}}<article class="spike {{if .Acknowledged}}reviewed{{end}}">
+<div class="spike-top">
+<span class="alert-icon">{{icon "trend"}}</span>
+<div>
+<h3>{{.Service}}</h3>
+<p>{{.Provider}} <span class="separator">·</span> {{.Date}}</p>
+</div>
+<span class="spike-change">{{.Change}}</span>
+</div>
+<p class="spike-description">{{.Actual}} in positive charges, compared with a {{.Baseline}} daily baseline. That’s {{.Extra}} extra.</p>
+<form method="post" action="/alerts">
+<input type="hidden" name="csrf" value="{{$.CSRF}}">
+<input type="hidden" name="key" value="{{.Key}}">
+<input type="hidden" name="month" value="{{$.Month}}">
+<input type="hidden" name="provider" value="{{$.Provider}}">
+<input type="hidden" name="reviewed" value="{{if .Acknowledged}}no{{else}}yes{{end}}">
+<button class="review-button" type="submit">{{if .Acknowledged}}Reviewed · Mark as open{{else}}Mark as reviewed{{end}}</button>
+</form>
+</article>{{else}}<div class="empty spike-empty">{{icon "shield"}}<h3>{{if .Confirmed}}No spikes detected{{else}}Coverage needs confirmation{{end}}</h3>
+<p>{{if .Confirmed}}The rule needs seven prior complete days. Sparse history does not prove that spending is normal.{{else}}Confirm full export coverage to compare daily spending.{{end}}</p>
+</div>{{end}}</div>
+<details class="method">
+<summary>What counts as a spike?</summary>
+<p>Positive charges per provider and service must exceed the previous seven covered days’ average by more than 50% and at least 20 {{.Currency}}. The candidate day is excluded. A new service can trigger an alert against a zero baseline. Credits do not hide positive-charge spikes.</p>
+</details>
+</section>
+</div>
+{{else if eq .Active "transactions"}}
+<section class="panel">
+<div class="panel-heading">
+<div>
+<h2>Billing activity</h2>
+<p>{{len .Rows}} matching rows. Identical charges remain separate.</p>
+</div>
+<a class="button secondary" href="/export.csv?month={{.Month}}&amp;provider={{.Provider}}&amp;search={{.Search}}">{{icon "import"}} Export CSV</a>
+</div>
+<div class="table-scroll">
+<table class="transactions">
+<thead>
+<tr>
+<th>Date</th>
+<th>Service</th>
+<th>Provider</th>
+<th>Type</th>
+<th class="right">Cost · {{.Currency}}</th>
+</tr>
+</thead>
+<tbody>{{range .Rows}}<tr>
+<td>{{date .Date}}</td>
+<td class="strong">{{.Service}}</td>
+<td>
+<span class="provider-tag">{{provider .Provider}}</span>
+</td>
+<td>{{if lt .Cost 0}}<span class="credit-tag">Credit</span>{{else}}Charge{{end}}</td>
+<td class="right strong {{if lt .Cost 0}}credit{{end}}">{{money .Cost .Currency}}</td>
+</tr>{{else}}<tr>
+<td colspan="5" class="empty">No charges match your filters. Try a different service or provider.</td>
+</tr>{{end}}</tbody>
+</table>
+</div>
+<p class="fine-print">CSV retains six decimal places. Displayed amounts round to two decimals. Formula-like service labels are prefixed with an apostrophe in downloads.</p>
+</section>
+{{else if eq .Active "imports"}}
+{{if .Preview}}<section class="panel import-preview">
+<div class="panel-heading">
+<div>
+<span class="eyebrow">REVIEW BEFORE REPLACEMENT</span>
+<h2>Your billing snapshot is ready.</h2>
+<p>{{.Preview.Snapshot.Name}} · {{len .Preview.Snapshot.Rows}} validated rows</p>
+</div>
+<span class="pill">{{.Preview.Snapshot.Currency}}</span>
+</div>
+<div class="preview-totals">
+<div>
+<small>Net charges</small>
+<strong>{{.PreviewNet}}</strong>
+</div>
+<div>
+<small>Positive charges</small>
+<strong>{{.PreviewGross}}</strong>
+</div>
+<div>
+<small>Credits</small>
+<strong>{{.PreviewCredits}}</strong>
+</div>
+</div>
+<p>Coverage {{.Preview.Snapshot.Coverage.From}} through {{.Preview.Snapshot.Coverage.Through}}. {{if .Preview.Snapshot.Coverage.Confirmed}}You confirmed that missing days mean zero charges.{{else}}Completeness is unconfirmed. Forecasts and spike alerts will be unavailable.{{end}}</p>
+<div class="notice warning">
+<strong>This replaces your current billing snapshot.</strong>
+<p>Existing charges will not be added to these rows. Matching budgets remain. Review status resets when billing contents change.</p>
+</div>
+<div class="table-scroll preview-table">
+<table>
+<thead>
+<tr>
+<th>Date</th>
+<th>Provider</th>
+<th>Service</th>
+<th>Cost</th>
+</tr>
+</thead>
+<tbody>{{range $i,$r:=.Preview.Snapshot.Rows}}{{if lt $i 8}}<tr>
+<td>{{$r.Date}}</td>
+<td>{{provider $r.Provider}}</td>
+<td>{{$r.Service}}</td>
+<td>{{money $r.Cost $r.Currency}}</td>
+</tr>{{end}}{{end}}</tbody>
+</table>
+</div>
+<p class="fine-print">Showing the first eight rows. All rows passed validation. This preview expires in 15 minutes.</p>
+<form method="post" action="/imports/apply" class="form-actions">
+<input type="hidden" name="csrf" value="{{.CSRF}}">
+<input type="hidden" name="token" value="{{.Token}}">
+<button class="button primary" type="submit">Replace snapshot {{icon "arrow"}}</button>
+<a class="button secondary" href="/imports">Cancel</a>
+</form>
+</section>
+{{else}}<div class="import-grid">
+<section class="panel">
+<div class="panel-heading">
+<div>
+<h2>Import a billing CSV</h2>
+<p>Preview every import before it changes your workspace.</p>
+</div>{{icon "import"}}</div>
+<form method="post" action="/imports/preview" enctype="multipart/form-data" class="import-form">
+<input type="hidden" name="csrf" value="{{.CSRF}}">
+<div class="upload-box">{{icon "cloud"}}<label for="file">Choose a billing export</label>
+<input type="file" name="file" id="file" accept=".csv,text/csv">
+<p>CSV only. Up to 2 MB and 25,000 rows.</p>
+</div>
+<label for="csv">Or paste CSV data</label>
+<textarea name="csv" id="csv" rows="7" placeholder="date,provider,service,cost,currency&#10;2026-10-01,aws,EC2 Compute,74.25,USD">{{.FormCSV}}</textarea>
+<p class="field-help">If you select a file, it takes precedence over pasted data.</p>
+<div class="form-row">
+<div>
+<label for="from">Coverage starts</label>
+<input type="date" name="from" id="from" value="{{.FormFrom}}" required>
+</div>
+<div>
+<label for="through">Coverage ends, inclusive</label>
+<input type="date" name="through" id="through" value="{{.FormThrough}}" required>
+</div>
+</div>
+<label class="checkbox-label">
+<input type="checkbox" name="complete" value="yes">
+<span>I confirm this export includes all charges for these providers over this period. Missing days mean zero charges.</span>
+</label>
+<p class="field-help">Leave this unchecked if unsure. Totals still work. Forecasts and spike alerts require complete coverage.</p>
+<button class="button primary" type="submit">Preview import {{icon "arrow"}}</button>
+</form>
+</section>
+<aside>
+<section class="panel">
+<div class="panel-heading">
+<h2>A shared billing format</h2>
+</div>
+<p>Convert your AWS, Azure, or Google Cloud export to these five columns.</p>
+<code class="csv-contract">date,provider,service,cost,currency</code>
+<ul class="requirements">
+<li>
+<strong>date</strong> uses YYYY-MM-DD, one billing day per row.</li>
+<li>
+<strong>provider</strong> is aws, azure, or gcp.</li>
+<li>
+<strong>service</strong> is the service name.</li>
+<li>
+<strong>cost</strong> is a decimal with up to six places. Credits are negative.</li>
+<li>
+<strong>currency</strong> is USD, EUR, or GBP. One currency per file.</li>
+</ul>
+<a class="button secondary wide" href="/sample.csv">Download sample CSV {{icon "import"}}</a>
+<p class="fine-print">Native provider headers are not supported yet. Pick a consistent daily cost metric before conversion. Include credits once. No currency conversion is performed.</p>
+</section>
+<section class="panel source-panel">
+<span class="eyebrow">ACTIVE SNAPSHOT</span>
+<h3>{{.Source}}</h3>
+<p>{{.CoverageFrom}} to {{.CoverageThrough}}</p>
+<p>{{if .Demo}}Illustrative demo data{{else}}Imported {{.ImportedAt}}{{end}}</p>
+<span class="local-note">{{icon "shield"}} Saved only on this machine</span>
+</section>
+</aside>
+</div>{{end}}
+{{else if eq .Active "settings"}}
+<div class="settings-grid">
+<section class="panel">
+<div class="panel-heading">
+<div>
+<h2>A budget for your next move</h2>
+<p>{{monthLabel .Month}} · {{provider .Provider}} · {{.Currency}}</p>
+</div>{{icon "wallet"}}</div>
+<form action="/budget" method="post" class="settings-form">
+<input type="hidden" name="currency" value="{{.Currency}}">
+<input type="hidden" name="snapshot" value="{{.SnapshotID}}">
+<input type="hidden" name="csrf" value="{{.CSRF}}">
+<input type="hidden" name="month" value="{{.Month}}">
+<input type="hidden" name="provider" value="{{.Provider}}">
+<label for="amount">Monthly spending limit · {{.Currency}}</label>
+<input id="amount" name="amount" type="text" inputmode="decimal" value="{{.BudgetInput}}" required maxlength="24">
+<p class="field-help">Use a nonnegative amount without thousands separators. Zero is a valid limit. This budget applies only to the selected month, provider, and currency.</p>
+<button class="button primary" type="submit">Save budget {{icon "arrow"}}</button>
+</form>
+</section>
+<section class="panel">
+<div class="panel-heading">
+<h2>Your workspace, your machine.</h2>{{icon "shield"}}</div>
+<p>Billing snapshots, budgets, and review status are saved in the local data directory. VaultPilot does not contact cloud providers or third-party services.</p>
+<dl class="info-list">
+<div>
+<dt>Application</dt>
+<dd>Go · HTML · CSS · SVG</dd>
+</div>
+<div>
+<dt>Access</dt>
+<dd>Localhost only</dd>
+</div>
+<div>
+<dt>Currency</dt>
+<dd>{{.Currency}} · no conversion</dd>
+</div>
+<div>
+<dt>Last charge</dt>
+<dd>{{.LastCharge}}</dd>
+</div>
+<div>
+<dt>Covered through</dt>
+<dd>{{.CoverageThrough}}</dd>
+</div>
+</dl>
+<p class="fine-print">This is a single-user local app. It is not a shared, authenticated cloud service. Keep the data directory private and back it up before replacing important exports.</p>
+</section>
+<section class="panel reset-panel">
+<div class="panel-heading">
+<div>
+<h2>Start again with demo data</h2>
+<p>Try VaultPilot with a sample startup’s cloud bill.</p>
+</div>
+</div>
+<form action="/reset" method="post">
+<input type="hidden" name="csrf" value="{{.CSRF}}">
+<label class="checkbox-label">
+<input type="checkbox" name="confirm" value="yes" required>
+<span>Replace the current snapshot, budgets, and review status with demo data.</span>
+</label>
+<button class="button secondary" type="submit">Restore demo workspace</button>
+</form>
+</section>
+</div>
+{{end}}
+<footer class="page-footer">
+<span>VaultPilot <span class="separator">·</span> Spend with perspective.</span>
+<span>Last charge {{.LastCharge}} <span class="separator">·</span> {{if .Confirmed}}Coverage confirmed{{else}}Coverage unconfirmed{{end}}</span>
+</footer>
+</main>
+</div>
+</div>
+</body>
+</html>{{end}}
