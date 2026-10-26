@@ -1,0 +1,4 @@
+date,provider,service,cost,currency
+2026-10-01,aws,Compute,0.10,USD
+2026-10-01,aws,Compute,0.10,USD
+2026-10-01,aws,Credit,-0.03,USD

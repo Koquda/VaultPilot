@@ -1,0 +1,5 @@
+/data/
+/vaultpilot
+*.test
+coverage.out
+.DS_Store
