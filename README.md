@@ -78,3 +78,13 @@ go test -race -ldflags=-linkmode=external ./...
 ```
 
 This requires Apple's command-line developer tools. Use a newer compatible Go installation if the external linker is unavailable. The current file-lock implementation supports macOS and Linux.
+
+For a standalone binary built with this older toolchain on Apple silicon, refresh its local signature after the external-link build:
+
+```sh
+go build -ldflags=-linkmode=external -o vaultpilot ./cmd/vaultpilot
+codesign --force --sign - vaultpilot
+./vaultpilot
+```
+
+The signing step applies to this older macOS toolchain workaround, not Linux builds. It uses an ad hoc local signature and requires no signing account.
